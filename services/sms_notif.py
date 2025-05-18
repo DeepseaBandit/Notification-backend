@@ -10,15 +10,12 @@ load_dotenv()
 
 router = APIRouter()
 
-# Twilio credentials
 account_sid = os.getenv("TWILIO_ACCOUNT_SID")
 auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 twilio_number = os.getenv("TWILIO_PHONE_NUMBER")
 
-# In-memory storage for SMS logs (will be reset every function execution in serverless)
 sms_logs = []
 
-# Create Twilio client if credentials are available
 twilio_client = None
 if account_sid and auth_token:
     try:
@@ -34,11 +31,9 @@ class SMSRequest(BaseModel):
 @router.post("/send")
 def send_sms(payload: SMSRequest):
     try:
-        # Generate a unique ID for this SMS
         sms_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         
-        # Create the SMS log entry
         log_entry = {
             "id": sms_id,
             "user_id": payload.user_id,
@@ -48,7 +43,6 @@ def send_sms(payload: SMSRequest):
             "created_at": timestamp
         }
         
-        # Only try to send SMS if Twilio client is configured
         if twilio_client and twilio_number:
             message = twilio_client.messages.create(
                 body=payload.body,
@@ -57,10 +51,8 @@ def send_sms(payload: SMSRequest):
             )
             log_entry["sid"] = message.sid
         else:
-            # For development or when Twilio is not configured
             print("Twilio not configured. SMS would have been sent to:", payload.to)
         
-        # Store in in-memory storage
         sms_logs.append(log_entry)
         
         return {"message": "SMS processed", "sid": log_entry["sid"], "id": sms_id}
@@ -70,12 +62,9 @@ def send_sms(payload: SMSRequest):
 @router.get("/logs/{user_id}")
 def get_sms_logs(user_id: int):
     """Get SMS logs for a user"""
-    # Filter logs for the specific user
     user_logs = [log for log in sms_logs if log["user_id"] == user_id]
     
-    # For Vercel/production, if no logs, return sample data
     if not user_logs and os.getenv("VERCEL") == "1":
-        # Return sample data for demonstration
         sample_logs = [
             {
                 "id": "sample-1",

@@ -7,11 +7,9 @@ import os
 
 app = FastAPI()
 
-# Get environment variables
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://notification-app-dgdx.vercel.app") 
 DEVELOPMENT_URL = os.getenv("DEVELOPMENT_URL", "http://localhost:3000")
 
-# Configure CORS properly for production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[FRONTEND_URL, DEVELOPMENT_URL, "*"],  # Temporarily include "*" during debugging
@@ -21,7 +19,6 @@ app.add_middleware(
     expose_headers=["Content-Type", "X-Requested-With", "Accept", "Authorization", "Access-Control-Allow-Origin"],
 )
 
-# API routes
 app.include_router(email_router, prefix="/email", tags=["Email"])
 app.include_router(sms_router, prefix="/sms", tags=["SMS"])
 app.include_router(inapp_router, prefix="/inapp", tags=["In-App"])
@@ -55,5 +52,5 @@ async def environment():
 if __name__ == "__main__":
     import uvicorn
     import os
-    port = int(os.environ.get("PORT", 8000))  # Use Railway's assigned port
+    port = int(os.environ.get("PORT", 8000))  
     uvicorn.run("main:app", host="0.0.0.0", port=port)

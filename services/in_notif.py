@@ -7,14 +7,13 @@ import os
 
 router = APIRouter()
 
-# In-memory storage for notifications (will be reset on each function execution in serverless)
 notifications_db = []
 
 class NotificationCreate(BaseModel):
     user_id: int
     title: str
     message: str
-    notification_type: str = "info"  # info, warning, error, success
+    notification_type: str = "info"  
     link: Optional[str] = None
 
 class Notification(BaseModel):
@@ -52,9 +51,7 @@ async def get_user_notifications(user_id: int, unread_only: bool = False):
     else:
         user_notifications = [n for n in notifications_db if n["user_id"] == user_id]
     
-    # For Vercel deployment, if no notifications, return sample data
     if not user_notifications and os.getenv("VERCEL") == "1":
-        # Create sample notifications for demonstration
         sample_notifications = [
             {
                 "id": f"{user_id}-sample-1",
@@ -89,7 +86,6 @@ async def get_user_notifications(user_id: int, unread_only: bool = False):
         ]
         return sample_notifications
     
-    # Sort by created_at (newest first)
     user_notifications.sort(key=lambda x: x["created_at"], reverse=True)
     return user_notifications
 
@@ -101,7 +97,6 @@ async def mark_notification_read(notification_id: str):
             notification["read"] = True
             return {"success": True}
     
-    # For Vercel, let's not throw errors if the notification is not found
     if os.getenv("VERCEL") == "1":
         return {"success": True, "note": "Sample notification marked as read"}
     
@@ -125,7 +120,6 @@ async def delete_notification(notification_id: str):
     original_length = len(notifications_db)
     notifications_db = [n for n in notifications_db if n["id"] != notification_id]
     
-    # For Vercel, let's not throw errors if the notification is not found
     if len(notifications_db) == original_length and os.getenv("VERCEL") != "1":
         raise HTTPException(status_code=404, detail="Notification not found")
     

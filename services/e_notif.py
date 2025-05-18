@@ -1,4 +1,4 @@
-# services/e_notif.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from pydantic import BaseModel, EmailStr
@@ -9,16 +9,12 @@ import json
 from datetime import datetime
 import uuid
 
-# Load environment variables
 load_dotenv()
 
 router = APIRouter()
 
-# In production with Vercel, we use in-memory storage instead of SQLite
-# since Vercel has a read-only filesystem in production
 email_notifications_db = []
 
-# Email config
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
@@ -31,7 +27,6 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
-# Schemas
 class EmailRequest(BaseModel):
     user_id: int
     email: EmailStr
@@ -50,7 +45,6 @@ class EmailNotificationResponse(BaseModel):
 @router.post("/send_email")
 async def send_email(data: EmailRequest):
     try:
-        # Create notification record
         notification_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         
@@ -64,11 +58,8 @@ async def send_email(data: EmailRequest):
             "created_at": timestamp
         }
         
-        # Store in in-memory DB (will be lost when serverless function ends)
-        # In a real application, you would store this in a persistent database
         email_notifications_db.append(notification)
         
-        # Create and send email
         message = MessageSchema(
             subject=data.subject,
             recipients=[data.email],
@@ -80,11 +71,7 @@ async def send_email(data: EmailRequest):
             fm = FastMail(conf)
             await fm.send_message(message)
         except Exception as email_error:
-            # If email sending fails, we still create the notification
-            # but mark it as not sent
             notification["sent"] = False
-            
-            # For real applications, log this error
             print(f"Email sending error: {str(email_error)}")
         
         return {"message": "Email notification processed", "notification_id": notification_id}
@@ -95,15 +82,10 @@ async def send_email(data: EmailRequest):
 @router.get("/users/{user_id}/notifications")
 def get_user_notifications(user_id: int):
     """Get all email notifications for a user - for demo purposes returns test data in production"""
-    # For Vercel deployment demo purposes, we'll return sample data
-    # In a real application, you would fetch this from a database
-    
-    # Check if we have data in our in-memory store
+
     user_notifications = [n for n in email_notifications_db if n["user_id"] == user_id]
     
-    # If no data, return sample data
     if not user_notifications and os.getenv("VERCEL") == "1":
-        # Sample data for demo
         return [
             {
                 "id": "sample-1",
