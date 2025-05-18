@@ -12,7 +12,7 @@ DEVELOPMENT_URL = os.getenv("DEVELOPMENT_URL", "http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, DEVELOPMENT_URL, "*"],  # Temporarily include "*" during debugging
+    allow_origins=[FRONTEND_URL, DEVELOPMENT_URL, "*"], 
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
