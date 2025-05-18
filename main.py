@@ -52,3 +52,8 @@ async def environment():
         "frontend_url": FRONTEND_URL,
         "is_vercel": os.getenv("VERCEL") == "1"
     }
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8000))  # Use Railway's assigned port
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
